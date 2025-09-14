@@ -46,7 +46,6 @@ export default function Wisata() {
             <TableHead>Phone</TableHead>
             <TableHead>Akses</TableHead>
             <TableHead>Fasilitas</TableHead>
-            <TableHead>Fasilitas</TableHead>
             <TableHead>Keunikan</TableHead>
             <TableHead>Biaya</TableHead>
             <TableHead>#</TableHead>

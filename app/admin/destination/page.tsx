@@ -1,17 +1,9 @@
 'use client';
 
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { createClient } from "@/lib/supabase/client";
 import { formatter } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { DestinationCard } from "./components/destination-card";
 
 export default function Wisata() {
 
@@ -34,41 +26,15 @@ export default function Wisata() {
 
   return (
     <div className="w-full">
-      <Table>
-        <TableCaption>list wisata.</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px]">No</TableHead>
-            <TableHead>Nama</TableHead>
-            <TableHead>Pengelolah</TableHead>
-            <TableHead>Jenis Wisata</TableHead>
-            <TableHead>Alamat</TableHead>
-            <TableHead>Phone</TableHead>
-            <TableHead>Akses</TableHead>
-            <TableHead>Fasilitas</TableHead>
-            <TableHead>Keunikan</TableHead>
-            <TableHead>Biaya</TableHead>
-            <TableHead>#</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {wisata.map((item, index) => (
-            <TableRow key={item.id}>
-              <TableCell>{index + 1}</TableCell>
-              <TableCell>{item.name}</TableCell>
-              <TableCell>{item.owner}</TableCell>
-              <TableCell>{item.type}</TableCell>
-              <TableCell>{item.address}</TableCell>
-              <TableCell>{item.phone}</TableCell>
-              <TableCell>{item.accesebility}</TableCell>
-              <TableCell>{item.fasility}</TableCell>
-              <TableCell>{item.unique}</TableCell>
-              <TableCell>{item.tariff}</TableCell>
-              <TableCell>#</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div>
+        <section className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {wisata.map((destination, index) => (
+              <DestinationCard key={index} {...destination} />
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   )
 }

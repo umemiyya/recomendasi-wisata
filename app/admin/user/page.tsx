@@ -1,34 +1,23 @@
 'use client';
 
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { createClient } from "@/lib/supabase/client";
 import { formatter } from "@/lib/utils";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { DetailedProfileCard } from "./components/user-card";
 
 export default function Users() {
 
-  const [user, setUser] = useState<any[]>([]);
+  const [data, setData] = useState<any[]>([]);
 
   // fetch user data from supabase
   useEffect(() => {
     const fetchData = async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase.from("users").select("*");
-      if (error) {
-        console.error("Error fetching user data:", error);
-      } else {
+      // const supabase = createClient();
+      // const { data, error } = await supabase.from("users").select("*");
+      const response = await fetch(`/api/users`);
+      const data = await response.json();
+      if (response.ok) {
         const newData = formatter(data as any[]);
-        setUser(newData);
+        setData(newData);
       }
     };
     fetchData();
@@ -36,7 +25,12 @@ export default function Users() {
 
   return (
     <div className="w-full">
-      <Table>
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 mb-8">
+        {data.map((dat) => (
+          <DetailedProfileCard key={dat.user.id} user={dat.user} rated_destinations={dat.rated_destinations} />
+        ))}
+      </div>
+      {/* <Table>
         <TableCaption>list user.</TableCaption>
         <TableHeader>
           <TableRow>
@@ -62,7 +56,7 @@ export default function Users() {
             </TableRow>
           ))}
         </TableBody>
-      </Table>
+      </Table> */}
     </div>
   )
 }

@@ -46,8 +46,20 @@ function recommendForUser(userId:any, ratings:any[], destinations:any[]) {
       denominator += Math.abs(sim);
     });
     const score = denominator === 0 ? 0 : numerator / denominator;
+  
     return {
       item: destinations.find(d => d.id === item)?.name || "Unknown",
+      name: destinations.find(d => d.id === item)?.name || "Unknown",
+      location: destinations.find(d => d.id === item)?.address || null,
+      owner: destinations.find(d => d.id === item)?.owner || null,
+      type: destinations.find(d => d.id === item)?.type || null,
+      address: destinations.find(d => d.id === item)?.address || null,
+      phone: destinations.find(d => d.id === item)?.phone || null,
+      accesebility: destinations.find(d => d.id === item)?.accesebility || null,
+      fasility: destinations.find(d => d.id === item)?.fasility || null,
+      unique: destinations.find(d => d.id === item)?.unique || null,
+      tariff: destinations.find(d => d.id === item)?.tariff || null,
+      image: destinations.find(d => d.id === item)?.image || null,
       score: score.toFixed(2)
     };
   });
@@ -96,9 +108,29 @@ export async function GET(request: NextRequest) {
     return new Response(JSON.stringify({ error: "User tidak ditemukan" }), { status: 404 });
   }
 
+  const rated_destinations = ratingsData.filter(r => r.user_id === parseInt(userId));
+  if (rated_destinations.length === 0) {
+    return new Response(JSON.stringify({ message: "User belum memberi rating" }), { status: 200 });
+  }
+
+  // find the rated destination details
+  const result_rated = rated_destinations.map(r => {
+    const destination = destinationsData.find(d => d.id === r.destination_id);
+    return {
+      id: r.destination_id,
+      name: destination?.name ?? "Unknown",
+      rating: r.rating,
+      location: destination?.address ?? null,
+    };
+  }); 
+
+  // detail destination + rekomendasi berdasarkan userId
+
+
   const result = recommendForUser(userId, ratingsData || [], destinationsData || []);
   return new Response(JSON.stringify({
     user: formatter([user])[0],
-    recommendations: formatter(result)
+    recommendations: formatter(result),
+    rated_destinations: formatter(result_rated),
   }));
 }

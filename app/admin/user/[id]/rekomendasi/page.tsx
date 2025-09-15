@@ -1,6 +1,8 @@
 'use client'
 import { use, useEffect, useState } from 'react';
- 
+import { UserProfile } from './componets/card-user';
+import { DestinationCard } from '@/app/admin/destination/components/destination-card';
+
 export default function BlogPostPage({
   params,
 }: {
@@ -26,22 +28,19 @@ export default function BlogPostPage({
   return (
     <div className='text-sm'>
       <div>
-        <h2 className='font-semibold underline'>Pengguna</h2>
-        {/* make list data pengguna */}
-        <div>Nama: {recommendations.user?.name}</div>
-        <div>Umur: {recommendations.user?.age}</div>
-        <div>Jenis Kelamin: {recommendations.user?.gender}</div>
-        <div>Preferensi: {recommendations.user?.preferences}</div>
+       {recommendations.user && (
+        <UserProfile user={recommendations.user} rated_destinations={recommendations.rated_destinations} />
+       )}
       </div>
       <div className="mt-5">
-        <h2 className='font-semibold underline'>Rekomendasi</h2>
+        <h2 className='font-semibold text-lg py-4'>Rekomendasi Wisata</h2>
         {/* make list data rekomendasi */}
         {recommendations.recommendations.length === 0 && (<p>Tidak ada rekomendasi tersedia.</p>)}
-        <ul>
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
           {recommendations.recommendations.map((rec: any, index: number) => (
-            <li key={index}>{rec.item} - Skor: {rec.score}</li>
+            <DestinationCard key={index} {...rec} />
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   )

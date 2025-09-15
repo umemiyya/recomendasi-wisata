@@ -13,12 +13,12 @@ export default function ProtectedLayout({
   return (
     <main className="min-h-screen flex flex-col items-center">
       <div className="w-full flex flex-col gap-10 items-center">
-        <nav className="w-full bg-green-100 flex justify-center border-b border-b-foreground/10 h-16">
+        <nav className="w-full bg-orange-50 flex justify-center border-b border-b-orange-300 h-16">
           <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
             <div className="flex gap-5 items-center font-semibold">
-              <div className="space-x-3">
-                <Link href="/admin/user">Pengguna</Link>
-                <Link href="/admin/destination">Destinasi</Link>
+              <div className="space-x-5">
+                <Link className="underline" href="/admin/user">Users</Link>
+                <Link className="underline" href="/admin/destination">Destinations</Link>
               </div>
             </div>
             {!hasEnvVars ? <EnvVarWarning /> : <AuthButton />}

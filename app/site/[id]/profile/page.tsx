@@ -2,8 +2,6 @@
 import { use, useEffect, useState } from 'react';
 
 
-import { UserProfile } from '@/app/admin/user/[id]/rekomendasi/componets/card-user';
-
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, Star } from 'lucide-react';
 import Link from 'next/link';
@@ -18,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { createClient } from '@/lib/supabase/client';
-import { DestinationCard } from '../destination/components/destination-card';
+
 import { redirect } from 'next/navigation';
 
 interface FormData {
@@ -135,6 +133,8 @@ const handleRatingChange = (destinationId: string, rating: number) => {
         .select()// menghindari duplikat
     }
 
+    redirect(`/site/${id}`)
+
     // Success message
     console.log({
       title: "Success!",
@@ -166,10 +166,6 @@ const handleRatingChange = (destinationId: string, rating: number) => {
     };
     fetchData();
   }, [id]);
-
-  if(!recommendations.recommendations) {
-    return redirect(`/site/${id}/profile`);
-  }
 
   return (
     <div className='text-sm'>
@@ -312,20 +308,6 @@ const handleRatingChange = (destinationId: string, rating: number) => {
     </Card>
         </div>
       )}
-      <div>
-       {recommendations.user && (
-        <UserProfile user={recommendations.user} rated_destinations={recommendations.rated_destinations} />
-       )}
-      </div>
-      <div className="mt-5">
-        <h2 className='font-semibold text-lg py-4'>Rekomendasi Wisata</h2>
-        {recommendations.recommendations.length === 0 && (<p>Tidak ada rekomendasi tersedia.</p>)}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
-          {recommendations.recommendations.map((rec: any, index: number) => (
-            <DestinationCard key={index} {...rec} />
-          ))}
-        </div>
-      </div>
     </div>
   )
 }

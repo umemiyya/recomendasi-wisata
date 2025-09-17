@@ -8,7 +8,7 @@ import Link from "next/link"
 export function DetailedProfileCard({ user, rated_destinations }: {user: any, rated_destinations: any}) {
 
   return (
-    <Card className="w-full shadow-none overflow-hidden">
+    <Card className="w-full border-orange-200 bg-orange-50/50 shadow-none overflow-hidden">
       <CardHeader className="relative pb-2">
         {/* Avatar positioned over cover */}
         <div className={`flex items-start gap-4 ${user.coverImage ? "-mt-12" : ""}`}>

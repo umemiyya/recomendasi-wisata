@@ -1,31 +1,21 @@
+import { Header } from "@/components/header"
+import { HeroSection } from "@/components/hero-section"
+import { FeaturesSection } from "@/components/features-section"
+import { HowItWorksSection } from "@/components/how-it-works-section"
+import { TestimonialsSection } from "@/components/testimonials-section"
+import { Footer } from "@/components/footer"
 
-import { EnvVarWarning } from "@/components/env-var-warning";
-import { AuthButton } from "@/components/auth-button";
-import { Hero } from "@/components/hero";
-
-
-
-import { hasEnvVars } from "@/lib/utils";
-import Link from "next/link";
-
-export default function Home() {
+export default function HomePage() {
   return (
-    <main className="min-h-screen flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-20 items-center">
-        <nav className="w-full flex bg-green-50 justify-center border-b border-b-foreground/10 h-16">
-          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-            <div className="flex gap-5 items-center font-semibold">
-              <Link href={"/admin/user"}>
-                Admin
-              </Link>
-            </div>
-            {!hasEnvVars ? <EnvVarWarning /> : <AuthButton />}
-          </div>
-        </nav>
-        <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
-          <Hero />
-        </div>
-      </div>
-    </main>
-  );
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main>
+        <HeroSection />
+        <FeaturesSection />
+        <HowItWorksSection />
+        <TestimonialsSection />
+      </main>
+      <Footer />
+    </div>
+  )
 }

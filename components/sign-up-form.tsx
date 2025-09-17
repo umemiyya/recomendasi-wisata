@@ -39,6 +39,25 @@ export function SignUpForm({
       return;
     }
 
+    // generate random user id for new user number upper 5 , one digit not decimal
+    const userId = Math.floor(Math.random() * (49 - 7 + 1)) + 7;
+
+
+  const { data, error } = await supabase
+    .from('users')
+    .insert([
+      {id: userId, name: email.split("@")[0], age: 0, gender: 'L', preferences: 'Belum ada', bio: 'Halo, saya pengguna baru!', email: email},
+    ])
+    .select();
+
+    console.log(data);
+
+    if (error) {
+      setError(error.message);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -58,10 +77,10 @@ export function SignUpForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
+      <Card className="border-orange-200 bg-orange-50/50">
         <CardHeader>
-          <CardTitle className="text-2xl">Sign up</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
+          <CardTitle className="text-2xl">Daftar</CardTitle>
+          <CardDescription>Buat akun baru</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp}>
@@ -91,7 +110,7 @@ export function SignUpForm({
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="repeat-password">Repeat Password</Label>
+                  <Label htmlFor="repeat-password">Ulangi Password</Label>
                 </div>
                 <Input
                   id="repeat-password"
@@ -102,14 +121,14 @@ export function SignUpForm({
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating an account..." : "Sign up"}
+              <Button type="submit" className="w-full bg-orange-300" disabled={isLoading}>
+                {isLoading ? "Creating an account..." : "Daftar"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
+              Sudah punya akun?{" "}
               <Link href="/auth/login" className="underline underline-offset-4">
-                Login
+                Masuk
               </Link>
             </div>
           </form>

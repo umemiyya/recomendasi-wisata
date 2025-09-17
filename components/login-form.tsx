@@ -39,7 +39,23 @@ export function LoginForm({
       });
       if (error) throw error;
       // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/admin/user");
+
+      if(email === "amiright0zz@gmail.com"){
+        router.push("/admin/user");
+      } else {
+        // get userid from table users where email = email
+        const { data } = await supabase
+          .from("users")
+          .select("id")
+          .eq("email", email)
+          .single();
+        if (data && data.id) {
+          router.push(`/site/${data.id}`);
+        } else {
+          setError("User not found.");
+        }
+      }
+
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -49,11 +65,11 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
+      <Card className="border-orange-200 bg-orange-50/50">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Masuk</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Masukkan email Anda di bawah ini untuk masuk ke akun Anda
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -77,7 +93,7 @@ export function LoginForm({
                     href="/auth/forgot-password"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
-                    Forgot your password?
+                    Lupa kata sandi?
                   </Link>
                 </div>
                 <Input
@@ -89,17 +105,17 @@ export function LoginForm({
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
+              <Button type="submit" className="w-full bg-orange-300" disabled={isLoading}>
+                {isLoading ? "Logging in..." : "Masuk"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
+              Belum punya akun?{" "}
               <Link
                 href="/auth/sign-up"
                 className="underline underline-offset-4"
               >
-                Sign up
+                Daftar
               </Link>
             </div>
           </form>

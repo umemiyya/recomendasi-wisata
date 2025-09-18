@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+// import { Button } from "@/components/ui/button"
 import { MapPin, Phone, Users, Camera } from "lucide-react"
 
 export function DestinationCard({
@@ -86,11 +86,11 @@ export function DestinationCard({
           </div>
         </div>
 
-        <div className="flex gap-2 pt-2">
+        {/* <div className="flex gap-2 pt-2">
           <Button variant="outline" size="sm" className="w-full shadow-none bg-orange-100 border-orange-300 flex-1">
             Berikan Rating
           </Button>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   )

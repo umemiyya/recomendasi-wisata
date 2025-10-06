@@ -230,7 +230,6 @@ useEffect(() => {
 
   return (
     <div className='text-sm'>
-      <p>{JSON.stringify(ratings)}</p>
       {
         recommendations.message && (
         <div className='max-w-4xl m-auto'>

@@ -31,11 +31,11 @@ const preferenceOptions = [
   { id: "kuliner", label: "Kuliner" },
   { id: "budaya", label: "Budaya" },
   { id: "pantai", label: "Pantai" },
-  { id: "snorkeling", label: "Snorkeling" },
+  { id: "religi", label: "Religi" },
   { id: "alam", label: "Alam" },
   { id: "museum", label: "Museum" },
   { id: "gunung", label: "Gunung" },
-  { id: "airterjun", label: "Air Terjun" },
+  { id: "air terjun", label: "Air Terjun" },
 ]
 
 const supabase = createClient();
@@ -52,6 +52,17 @@ export default function BlogPostPage({
     rating: 0,
     name: '',
     location: '',
+    type: [],
+    tariff: '',
+  }]);
+
+  const [allRatings, setAllRatings] = useState<any>([{
+    destinationId: '',
+    rating: 0,
+    name: '',
+    location: '',
+    type: [],
+    tariff: '',
   }]);
 
   const [recommendations, setRecommendations] = useState<any>({
@@ -67,6 +78,11 @@ export default function BlogPostPage({
     bio: "",
   })
 
+  const [preferences, setPreferences] = useState<string[]>([])
+
+  const [selectedTariff, setSelectedTariff] = useState<string>(""); // 🟧 filter by tariff
+
+
 const handleRatingChange = (destinationId: string, rating: number) => {
   setRatings((prevRatings: any[]) =>
     prevRatings.map((destination) =>
@@ -79,6 +95,13 @@ const handleRatingChange = (destinationId: string, rating: number) => {
 
 
   const handlePreferenceChange = (preferenceId: string, checked: boolean) => {
+    setPreferences((prev) => {
+      if (checked) {
+        return [...prev, preferenceId]
+      } else {
+        return prev.filter((id) => id !== preferenceId)
+      }
+    })
     setFormData((prev) => ({
       ...prev,
       preferences: checked ? [...prev.preferences, preferenceId] : prev.preferences.filter((id) => id !== preferenceId),
@@ -152,7 +175,6 @@ const handleRatingChange = (destinationId: string, rating: number) => {
       const response = await fetch(`/api/recommendations?userId=${id}`);
       const data = await response.json();
       setRecommendations(data);
-      console.log(data);
       // kalau tidak ad user redirect ke halaman profile
 
       const responseRatings = await fetch(`/api/already-rating`);
@@ -162,13 +184,53 @@ const handleRatingChange = (destinationId: string, rating: number) => {
         rating: d.rating,
         name: d.name,
         location: d.location,
+        type: d.type.split(',').map((t:string) => t.trim()),
+        tariff: d.tariff,
+      })));
+      setAllRatings(dataRatings.map((d:any) => ({
+        destinationId: d.id,  // samakan field
+        rating: d.rating,
+        name: d.name,
+        location: d.location,
+        type: d.type.split(',').map((t:string) => t.trim()),
+        tariff: d.tariff,
       })));
     };
     fetchData();
   }, [id]);
 
+useEffect(() => {
+  let filtered = allRatings;
+
+  // 🟧 Filter berdasarkan preferences (type)
+  if (preferences.length > 0) {
+    filtered = filtered.filter((r: any) =>
+      r.type.some((t: string) => preferences.includes(t.toLowerCase()))
+    );
+  }
+
+  // 🟧 Filter berdasarkan tarif
+  if (selectedTariff) {
+    const max = parseInt(selectedTariff, 10);
+    let min = 0;
+
+    if (max === 50000) min = 0;
+    else if (max === 100000) min = 50000;
+    else if (max === 500000) min = 100000;
+    else if (max === 10000000) min = 500000;
+
+    filtered = filtered.filter((r: any) => {
+      const tariffNum = parseInt(r.tariff, 10);
+      return tariffNum >= min && tariffNum <= max;
+    });
+  }
+
+  setRatings(filtered);
+}, [preferences, selectedTariff, allRatings]);
+
   return (
     <div className='text-sm'>
+      <p>{JSON.stringify(ratings)}</p>
       {
         recommendations.message && (
         <div className='max-w-4xl m-auto'>
@@ -231,6 +293,18 @@ const handleRatingChange = (destinationId: string, rating: number) => {
             </Select>
           </div>
 
+          {/* Bio Field */}
+          <div className="space-y-2">
+            <Label htmlFor="bio">Bio*</Label>
+            <Textarea
+              id="bio"
+              placeholder="Tell us about yourself..."
+              rows={4}
+              value={formData.bio}
+              onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
+            />
+          </div>
+
           {/* Preferences Field */}
           <div className="space-y-3">
             <Label>Preferences</Label>
@@ -250,20 +324,23 @@ const handleRatingChange = (destinationId: string, rating: number) => {
             </div>
           </div>
 
-          {/* Bio Field */}
           <div className="space-y-2">
-            <Label htmlFor="bio">Bio*</Label>
-            <Textarea
-              id="bio"
-              placeholder="Tell us about yourself..."
-              rows={4}
-              value={formData.bio}
-              onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
-            />
+            <Label htmlFor="bio">Tariff*</Label>
+            <Select value={selectedTariff} onValueChange={(value) => setSelectedTariff(value)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Pilih tarif" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="50000"> {"0 - 50.000"} </SelectItem>
+                <SelectItem value="100000"> {"50.000 - 100.000"} </SelectItem>
+                <SelectItem value="500000"> {"100.000 - 500.000"} </SelectItem>
+                <SelectItem value="10000000"> {"> 500.000"} </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
-            <Label>Ratings*</Label>
+          <Label>Ratings*</Label>
           {ratings.length === 0 ? (
             <p className="text-sm text-muted-foreground">User belum memberi rating</p>
           ) : (
@@ -291,7 +368,6 @@ const handleRatingChange = (destinationId: string, rating: number) => {
                   </div>
 
                   <p className="text-sm text-muted-foreground">{destination.location}</p>
-  
                   {/* <span className="text-sm font-semibold">{user.rating.toFixed(1)}</span> */}
                 </div>
               ))}

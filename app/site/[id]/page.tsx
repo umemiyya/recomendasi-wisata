@@ -2,11 +2,7 @@
 import { use, useEffect, useState } from 'react';
 
 
-import { UserProfile } from '@/app/admin/user/[id]/rekomendasi/componets/card-user';
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Star } from 'lucide-react';
-import Link from 'next/link';
 
 import type React from "react"
 
@@ -16,9 +12,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
+
 import { createClient } from '@/lib/supabase/client';
-import { DestinationCard } from '../destination/components/destination-card';
+
 import { redirect } from 'next/navigation';
 
 interface FormData {
@@ -29,17 +25,6 @@ interface FormData {
   bio: string
 }
 
-const preferenceOptions = [
-  { id: "kuliner", label: "Kuliner" },
-  { id: "budaya", label: "Budaya" },
-  { id: "pantai", label: "Pantai" },
-  { id: "snorkeling", label: "Snorkeling" },
-  { id: "alam", label: "Alam" },
-  { id: "museum", label: "Museum" },
-  { id: "gunung", label: "Gunung" },
-  { id: "airterjun", label: "Air Terjun" },
-]
-
 const supabase = createClient();
 
 export default function BlogPostPage({
@@ -49,43 +34,13 @@ export default function BlogPostPage({
 }) {
   const { id } = use(params)
 
-  const [ratings, setRatings] = useState<any>([{
-    destinationId: '',
-    rating: 0,
-    name: '',
-    location: '',
-  }]);
-
-  const [recommendations, setRecommendations] = useState<any>({
-    user: null,
-    recommendations: [],
-  });
-
   const [formData, setFormData] = useState<FormData>({
     name: "",
     age: "",
     gender: "",
     preferences: [],
     bio: "",
-  })
-
-const handleRatingChange = (destinationId: string, rating: number) => {
-  setRatings((prevRatings: any[]) =>
-    prevRatings.map((destination) =>
-      destination.destinationId === destinationId
-        ? { ...destination, rating } // hanya update yang cocok
-        : destination
-    )
-  )
-}
-
-
-  const handlePreferenceChange = (preferenceId: string, checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      preferences: checked ? [...prev.preferences, preferenceId] : prev.preferences.filter((id) => id !== preferenceId),
-    }))
-  }
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -100,11 +55,19 @@ const handleRatingChange = (destinationId: string, rating: number) => {
       return
     }
 
+    if (formData.age === "0") {
+      console.log({
+        title: "Error",
+        description: "Age must be greater than 0",
+        variant: "destructive",
+      })
+      return
+    }
+
     const userUpdate = {
       name: formData.name,
       age: parseInt(formData.age, 10),
       gender: formData.gender,
-      preferences: formData.preferences.join(','), // convert array to comma-separated string
       bio: formData.bio,
     }
     
@@ -114,81 +77,42 @@ const handleRatingChange = (destinationId: string, rating: number) => {
       .eq('id', id)
       .select()
     
-    const dataRate = ratings.map((r: any) => {
-      // return rates yang diisi saja
-      if(r.rating > 0) {
-        return {
-          id: Math.floor(Math.random() * (1000 - 7 + 1)) + 7,
-          destination_id: r.destinationId,
-          rating: r.rating,
-          user_id: parseInt(id, 10),
-        }
-      }
-    }).filter(Boolean)
-
-    if (!error) {
-      // Kirim data rating ke API
-      // 
-      await supabase
-        .from('rating')
-        .insert(dataRate)
-        .select()// menghindari duplikat
+    if (error) {
+      console.log({
+        title: "Error",
+        description: "Age must be greater than 0",
+        variant: "destructive",
+      })
+      return
+    } else {
+      redirect(`/site/${id}/form`)
     }
-
-    // Success message
-    console.log({
-      title: "Success!",
-      description: "Profile information has been saved successfully.",
-    })
-
-    console.log("Form submitted:", formData)
-    console.log("Form rating:", dataRate)
   }
-
 
   // fetch from api /api/recommendations?userId={id}
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch(`/api/recommendations?userId=${id}`);
-      const data = await response.json();
-      setRecommendations(data);
-      console.log(data);
-      // kalau tidak ad user redirect ke halaman profile
+      const { data: users } = await supabase
+        .from('users')
+        .select("*")
+        .eq('id', id);
 
-      const responseRatings = await fetch(`/api/already-rating`);
-      const dataRatings = await responseRatings.json();
-      setRatings(dataRatings.map((d:any) => ({
-        destinationId: d.id,  // samakan field
-        rating: d.rating,
-        name: d.name,
-        location: d.location,
-      })));
+      if (users && users.length > 0 && users[0].age != 0) {
+        redirect(`/site/${id}/form`)
+      }
     };
     fetchData();
   }, [id]);
 
-  if(!recommendations.recommendations) {
-    return redirect(`/site/${id}/profile`);
-  }
-
   return (
     <div className='text-sm'>
-      {
-        recommendations.message && (
-        <div className='max-w-4xl m-auto'>
+      <div className='max-w-4xl m-auto'>
           <Card className="w-full border-orange-200 bg-orange-50/50">
       <CardHeader>
         <CardTitle>Personal Information</CardTitle>
         <CardDescription>Lengkapi data diri Anda untuk mendapatkan rekomendasi wisata terbaik untuk anda!</CardDescription>
       </CardHeader>
       <CardContent>
-        <Alert className='mb-10 m-auto border-orange-300 bg-orange-50/50 flex flex-col items-start gap-2'>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{recommendations.message}</AlertTitle>
-          <AlertDescription>
-            <Link href="/site/destination" className='underline'>Lihat Destinasi</Link>
-          </AlertDescription>
-        </Alert>
         <form onSubmit={handleSubmit} className="space-y-6 mt-6">
           {/* Name Field */}
           <div className="space-y-2">
@@ -235,25 +159,6 @@ const handleRatingChange = (destinationId: string, rating: number) => {
             </Select>
           </div>
 
-          {/* Preferences Field */}
-          <div className="space-y-3">
-            <Label>Preferences</Label>
-            <div className="grid grid-cols-2 gap-3">
-              {preferenceOptions.map((option) => (
-                <div key={option.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={option.id}
-                    checked={formData.preferences.includes(option.id)}
-                    onCheckedChange={(checked) => handlePreferenceChange(option.id, checked as boolean)}
-                  />
-                  <Label htmlFor={option.id} className="text-sm font-normal cursor-pointer">
-                    {option.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Bio Field */}
           <div className="space-y-2">
             <Label htmlFor="bio">Bio*</Label>
@@ -266,66 +171,14 @@ const handleRatingChange = (destinationId: string, rating: number) => {
             />
           </div>
 
-          <div>
-            <Label>Ratings*</Label>
-          {ratings.length === 0 ? (
-            <p className="text-sm text-muted-foreground">User belum memberi rating</p>
-          ) : (
-            <div className='grid grid-cols-2 gap-4 max-h-60 overflow-y-auto mt-2'>
-              {ratings.map((destination:any) => (
-                <div key={destination.destinationId} className="border-t border-orange-100 flex py-2 flex-col items-start gap-2">
-                  <p className="text-sm">{destination.name}</p>
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => {
-                      const starValue = i + 1
-                      return (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 cursor-pointer ${
-                            starValue <= destination.rating
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-gray-300"
-                          }`}
-                          onClick={() =>
-                            handleRatingChange(destination.destinationId, starValue)
-                          }
-                        />
-                      )
-                    })}
-                  </div>
-
-                  <p className="text-sm text-muted-foreground">{destination.location}</p>
-  
-                  {/* <span className="text-sm font-semibold">{user.rating.toFixed(1)}</span> */}
-                </div>
-              ))}
-            </div>
-          )}
-          </div>
-
           {/* Submit Button */}
           <Button type="submit" className="w-full bg-orange-300">
-            Berikan Rekomendasi
+            Simpan
           </Button>
         </form>
       </CardContent>
     </Card>
         </div>
-      )}
-      <div>
-       {recommendations.user && (
-        <UserProfile user={recommendations.user} rated_destinations={recommendations.rated_destinations} />
-       )}
-      </div>
-      <div className="mt-5">
-        <h2 className='font-semibold text-lg py-4'>Rekomendasi Wisata</h2>
-        {recommendations.recommendations.length === 0 && (<p>Tidak ada rekomendasi tersedia.</p>)}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
-          {recommendations.recommendations.map((rec: any, index: number) => (
-            <DestinationCard key={index} {...rec} />
-          ))}
-        </div>
-      </div>
     </div>
   )
 }

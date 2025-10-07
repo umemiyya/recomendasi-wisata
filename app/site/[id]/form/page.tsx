@@ -1,23 +1,19 @@
 'use client'
 import { use, useEffect, useState } from 'react';
 
-
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Star } from 'lucide-react';
-import Link from 'next/link';
+import { Star } from 'lucide-react';
 
 import type React from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { createClient } from '@/lib/supabase/client';
 
-import { redirect } from 'next/navigation';
+import { Checkbox } from "@/components/ui/checkbox"
+
+
 
 interface FormData {
   name: string
@@ -38,7 +34,6 @@ const preferenceOptions = [
   { id: "air terjun", label: "Air Terjun" },
 ]
 
-const supabase = createClient();
 
 export default function BlogPostPage({
   params,
@@ -82,6 +77,10 @@ export default function BlogPostPage({
 
   const [selectedTariff, setSelectedTariff] = useState<string>(""); // 🟧 filter by tariff
 
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+
 
 const handleRatingChange = (destinationId: string, rating: number) => {
   setRatings((prevRatings: any[]) =>
@@ -109,64 +108,35 @@ const handleRatingChange = (destinationId: string, rating: number) => {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  e.preventDefault();
+  setLoading(true);
 
-    // Basic validation
-    if (!formData.name || !formData.age || !formData.gender) {
-      console.log({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      })
-      return
-    }
+  // Ambil hanya rating yang diisi
+  const dataRate = ratings
+    .filter((r: any) => r.rating > 0)
+    .map((r: any) => ({
+      id: Math.floor(Math.random() * (1000 - 7 + 1)) + 7,
+      destination_id: r.destinationId,
+      rating: r.rating,
+      user_id: parseInt(id, 10),
+    }));
 
-    const userUpdate = {
-      name: formData.name,
-      age: parseInt(formData.age, 10),
-      gender: formData.gender,
-      preferences: formData.preferences.join(','), // convert array to comma-separated string
-      bio: formData.bio,
-    }
-    
-    const { error } = await supabase
-      .from('users')
-      .update(userUpdate)
-      .eq('id', id)
-      .select()
-    
-    const dataRate = ratings.map((r: any) => {
-      // return rates yang diisi saja
-      if(r.rating > 0) {
-        return {
-          id: Math.floor(Math.random() * (1000 - 7 + 1)) + 7,
-          destination_id: r.destinationId,
-          rating: r.rating,
-          user_id: parseInt(id, 10),
-        }
-      }
-    }).filter(Boolean)
-
-    if (!error) {
-      // Kirim data rating ke API
-      // 
-      await supabase
-        .from('rating')
-        .insert(dataRate)
-        .select()// menghindari duplikat
-    }
-
-    redirect(`/site/${id}`)
-
-    // Success message
-    console.log({
-      title: "Success!",
-      description: "Profile information has been saved successfully.",
-    })
-
-    console.log("Form submitted:", formData)
-    console.log("Form rating:", dataRate)
+  if (dataRate.length === 0) {
+    console.log("Belum ada rating yang diberikan.");
+    setLoading(false);
+    return;
   }
+
+  console.log(recommendations)
+
+  // 🚀 Ambil rekomendasi baru setelah rating dikirim
+  const res = await fetch(`/api/recommendations?userId=${id}`);
+  const data = await res.json();
+
+  setResults(data.recommendations || []);
+  setLoading(false);
+};
+
 
 
   // fetch from api /api/recommendations?userId={id}
@@ -230,80 +200,16 @@ useEffect(() => {
 
   return (
     <div className='text-sm'>
-      {
-        recommendations.message && (
-        <div className='max-w-4xl m-auto'>
+    <div className='max-w-4xl m-auto'>
           <Card className="w-full border-orange-200 bg-orange-50/50">
-      <CardHeader>
-        <CardTitle>Personal Information</CardTitle>
-        <CardDescription>Lengkapi data diri Anda untuk mendapatkan rekomendasi wisata terbaik untuk anda!</CardDescription>
+      <CardHeader className='border-b border-orange-100'>
+        <CardTitle>Form Rekomendasi</CardTitle>
+        <CardDescription>
+          Lengkapi informasi preferensi dan berikan rating untuk menampilkan hasil rekomendasi!
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <Alert className='mb-10 m-auto border-orange-300 bg-orange-50/50 flex flex-col items-start gap-2'>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{recommendations.message}</AlertTitle>
-          <AlertDescription>
-            <Link href="/site/destination" className='underline'>Lihat Destinasi</Link>
-          </AlertDescription>
-        </Alert>
         <form onSubmit={handleSubmit} className="space-y-6 mt-6">
-          {/* Name Field */}
-          <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="Enter your full name"
-              value={formData.name}
-              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-              required
-            />
-          </div>
-
-          {/* Age Field */}
-          <div className="space-y-2">
-            <Label htmlFor="age">Age *</Label>
-            <Input
-              id="age"
-              type="number"
-              placeholder="Enter your age"
-              min="1"
-              max="120"
-              value={formData.age}
-              onChange={(e) => setFormData((prev) => ({ ...prev, age: e.target.value }))}
-              required
-            />
-          </div>
-
-          {/* Gender Field */}
-          <div className="space-y-2">
-            <Label htmlFor="gender">Gender *</Label>
-            <Select
-              value={formData.gender}
-              onValueChange={(value) => setFormData((prev) => ({ ...prev, gender: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your gender" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="L">Laki laki</SelectItem>
-                <SelectItem value="P">Perempuan</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Bio Field */}
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio*</Label>
-            <Textarea
-              id="bio"
-              placeholder="Tell us about yourself..."
-              rows={4}
-              value={formData.bio}
-              onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
-            />
-          </div>
-
           {/* Preferences Field */}
           <div className="space-y-3">
             <Label>Preferences</Label>
@@ -379,10 +285,44 @@ useEffect(() => {
             Berikan Rekomendasi
           </Button>
         </form>
-      </CardContent>
+        {loading && (
+  <p className="text-center text-sm text-muted-foreground mt-4">
+    Sedang memuat rekomendasi...
+  </p>
+)}
+
+{results.length > 0 && (
+  <div className="mt-8 border-t pt-6">
+    <h3 className="text-lg font-semibold mb-4">✨ Rekomendasi Wisata Untukmu</h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {results.map((r: any, index: number) => (
+        <Card key={index} className="border-orange-100 bg-white">
+          <CardHeader>
+            <CardTitle className="text-base">{r.name}</CardTitle>
+            <CardDescription>{r.location}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm">Tarif: {r.tariff}</p>
+            <div className="flex flex-wrap gap-1 mt-2">
+              {r.type?.split(',').map((t: string, i: number) => (
+                <span
+                  key={i}
+                  className="text-xs bg-orange-100 px-2 py-1 rounded-full text-orange-700"
+                >
+                  {t.trim()}
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </div>
+)}
+
+    </CardContent>
     </Card>
-        </div>
-      )}
+    </div>
     </div>
   )
 }

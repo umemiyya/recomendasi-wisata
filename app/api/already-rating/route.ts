@@ -5,26 +5,53 @@ import { NextResponse } from "next/server";
 const supabase = createClient();
 
 export async function GET() {
-  const { data : uniqe, error } = await supabase
-    .from('rating')   // ganti dengan nama tabel kamu
-    .select('destination_id')
+  // Ambil semua data rating
+  const { data: ratingData, error: ratingError } = await supabase
+    .from("rating") // tabel rating
+    .select("destination_id, rating"); // ambil juga kolom rating
 
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  if (ratingError) {
+    return new Response(JSON.stringify({ error: ratingError.message }), { status: 500 });
   }
 
-  if(uniqe) {
-    const { data, error} = await supabase
-      .from('wisata') // ganti dengan nama tabel kamu
-      .select('*')
-      .in('id', uniqe.map((item) => item.destination_id)); // ambil destinasi berdasarkan destination_id dari tabel rating
-    if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  if (ratingData && ratingData.length > 0) {
+    // Ambil semua id destinasi unik dari tabel rating
+    const destinationIds = [...new Set(ratingData.map((r) => r.destination_id))];
+
+    // Ambil data wisata berdasarkan id dari rating
+    const { data: wisataData, error: wisataError } = await supabase
+      .from("wisata") // tabel wisata
+      .select("*")
+      .in("id", destinationIds);
+
+    if (wisataError) {
+      return new Response(JSON.stringify({ error: wisataError.message }), { status: 500 });
     }
-    return NextResponse.json(formatter(data));
+
+    // Gabungkan data wisata dengan rating
+    const combinedData = wisataData.map((wisata) => {
+      const ratingsForThis = ratingData.filter((r) => r.destination_id === wisata.id);
+      const ratings = ratingsForThis.map((r) => r.rating);
+      const total_rating = ratings.length;
+      const average_rating =
+        total_rating > 0
+          ? ratings.reduce((sum, val) => sum + val, 0) / total_rating
+          : 0;
+
+      return{
+        ...wisata,
+        ratings,
+        average_rating,
+        total_rating,
+      };
+    });
+
+    return NextResponse.json(formatter(combinedData));
   }
+
   return NextResponse.json([]);
 }
+
 
 export async function POST(req: Request) {
   try {
@@ -37,22 +64,57 @@ export async function POST(req: Request) {
       );
     }
 
-    // Update kalau sudah ada, kalau belum insert baru
-    const { data, error } = await supabase
+    // Generate ID unik antara 100–500
+    const uniqueId = Math.floor(Math.random() * (500 - 101 + 1)) + 100;
+
+    // Cek apakah user sudah pernah memberikan rating untuk destinasi ini
+    const { data: existing, error: selectError } = await supabase
       .from("rating")
-      .upsert(
-        {
-          user_id: userId,
-          destination_id: destinationId,
-          rating: rating,
-        },
-        { onConflict: "user_id, destination_id" } // supaya tidak duplikat
-      )
-      .select();
+      .select("*")
+      .eq("user_id", userId)
+      .eq("destination_id", destinationId)
+      .maybeSingle();
 
-    if (error) throw error;
+    if (selectError && selectError.code !== "PGRST116") throw selectError;
 
-    return NextResponse.json({ success: true, data });
+    let data;
+
+    if (existing) {
+      // 🔁 Update rating jika sudah pernah memberikan
+      const { data: updated, error: updateError } = await supabase
+        .from("rating")
+        .update({ rating })
+        .eq("user_id", userId)
+        .eq("destination_id", destinationId)
+        .select();
+
+      if (updateError) throw updateError;
+      data = updated;
+    } else {
+      // 🆕 Insert baru dengan ID acak
+      const { data: inserted, error: insertError } = await supabase
+        .from("rating")
+        .insert([
+          {
+            id: uniqueId,
+            user_id: userId,
+            destination_id: destinationId,
+            rating,
+          },
+        ])
+        .select();
+
+      if (insertError) throw insertError;
+      data = inserted;
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: existing
+        ? "Rating berhasil diperbarui!"
+        : "Rating berhasil ditambahkan!",
+      data,
+    });
   } catch (err: any) {
     console.error("Error updating rating:", err.message);
     return NextResponse.json(

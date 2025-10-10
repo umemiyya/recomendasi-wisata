@@ -5,13 +5,14 @@ import { Star } from 'lucide-react';
 
 import type React from "react"
 
-import { Button } from "@/components/ui/button"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import { Checkbox } from "@/components/ui/checkbox"
+import Link from 'next/link';
 
 
 
@@ -58,6 +59,9 @@ export default function BlogPostPage({
     location: '',
     type: [],
     tariff: '',
+    ratings: [],
+    average_rating: 0,
+    total_rating: 0,
   }]);
 
   const [recommendations, setRecommendations] = useState<any>({
@@ -82,15 +86,15 @@ export default function BlogPostPage({
 
 
 
-const handleRatingChange = (destinationId: string, rating: number) => {
-  setRatings((prevRatings: any[]) =>
-    prevRatings.map((destination) =>
-      destination.destinationId === destinationId
-        ? { ...destination, rating } // hanya update yang cocok
-        : destination
-    )
-  )
-}
+// const handleRatingChange = (destinationId: string, rating: number) => {
+//   setRatings((prevRatings: any[]) =>
+//     prevRatings.map((destination) =>
+//       destination.destinationId === destinationId
+//         ? { ...destination, rating } // hanya update yang cocok
+//         : destination
+//     )
+//   )
+// }
 
 
   const handlePreferenceChange = (preferenceId: string, checked: boolean) => {
@@ -156,6 +160,9 @@ const handleRatingChange = (destinationId: string, rating: number) => {
         location: d.location,
         type: d.type.split(',').map((t:string) => t.trim()),
         tariff: d.tariff,
+        ratings: d.ratings,
+        average_rating: d.average_rating,
+        total_rating: d.total_rating,
       })));
       setAllRatings(dataRatings.map((d:any) => ({
         destinationId: d.id,  // samakan field
@@ -164,6 +171,9 @@ const handleRatingChange = (destinationId: string, rating: number) => {
         location: d.location,
         type: d.type.split(',').map((t:string) => t.trim()),
         tariff: d.tariff,
+        ratings: d.ratings,
+        average_rating: d.average_rating,
+        total_rating: d.total_rating,
       })));
     };
     fetchData();
@@ -201,7 +211,7 @@ useEffect(() => {
   return (
     <div className='text-sm'>
     <div className='max-w-4xl m-auto'>
-          <Card className="w-full border-orange-200 bg-orange-50/50">
+    <Card className="w-full border-orange-200 bg-orange-50/50">
       <CardHeader className='border-b border-orange-100'>
         <CardTitle>Form Rekomendasi</CardTitle>
         <CardDescription>
@@ -249,41 +259,109 @@ useEffect(() => {
           {ratings.length === 0 ? (
             <p className="text-sm text-muted-foreground">User belum memberi rating</p>
           ) : (
-            <div className='grid grid-cols-2 gap-4 max-h-60 overflow-y-auto mt-2'>
-              {ratings.map((destination:any) => (
-                <div key={destination.destinationId} className="border-t border-orange-100 flex py-2 flex-col items-start gap-2">
-                  <p className="text-sm">{destination.name}</p>
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => {
-                      const starValue = i + 1
-                      return (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 cursor-pointer ${
-                            starValue <= destination.rating
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-gray-300"
-                          }`}
-                          onClick={() =>
-                            handleRatingChange(destination.destinationId, starValue)
-                          }
-                        />
-                      )
-                    })}
-                  </div>
+            // <div className='grid grid-cols-2 gap-4 max-h-60 overflow-y-auto mt-2'>
+            //   {ratings.map((destination:any) => (
+            //     <div key={destination.destinationId} className="border-t border-orange-100 flex py-2 flex-col items-start gap-2">
+            //       <p className="text-sm">{destination.name}</p>
+            //       <div className="flex items-center gap-1">
+            //         {[...Array(5)].map((_, i) => {
+            //           const starValue = i + 1
+            //           return (
+            //             <Star
+            //               key={i}
+            //               className={`h-4 w-4 cursor-pointer ${
+            //                 starValue <= destination.rating
+            //                   ? "fill-yellow-400 text-yellow-400"
+            //                   : "text-gray-300"
+            //               }`}
+            //               onClick={() =>
+            //                 handleRatingChange(destination.destinationId, starValue)
+            //               }
+            //             />
+            //           )
+            //         })}
+            //       </div>
 
-                  <p className="text-sm text-muted-foreground">{destination.location}</p>
-                  {/* <span className="text-sm font-semibold">{user.rating.toFixed(1)}</span> */}
-                </div>
-              ))}
+            //       <p className="text-sm text-muted-foreground">{destination.location}</p>
+            //       {/* <span className="text-sm font-semibold">{user.rating.toFixed(1)}</span> */}
+            //     </div>
+            //   ))}
+            // </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-96 overflow-y-auto mt-2">
+              {ratings
+                .sort((a: any, b: any) => b.average_rating - a.average_rating) // urutkan dari tertinggi ke terendah
+                .map((destination: any) => (
+                  <Link href={`/site/${id}/form/${destination.destinationId}`} key={destination.destinationId} className="no-underline">
+                    <div
+                      key={destination.destinationId}
+                      className="border border-orange-100 bg-white rounded-2xl p-4 transition-all flex flex-col gap-3"
+                    >
+                      {/* Header */}
+                      <div className="flex flex-col">
+                        <h3 className="text-base font-semibold text-gray-800">
+                          {destination.name || "Nama tidak tersedia"}
+                        </h3>
+                        <p className="text-sm text-gray-500">{destination.location || "-"}</p>
+                      </div>
+
+                      {/* Jenis wisata */}
+                      {destination.type?.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {destination.type.map((t: string, idx: number) => (
+                            <span
+                              key={idx}
+                              className="text-xs bg-orange-50 text-orange-600 px-2 py-1 rounded-full border border-orange-100"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Tarif */}
+                      {destination.tariff && (
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <span className="font-medium">Tarif:</span>
+                          <span className="text-orange-600 font-semibold">{destination.tariff}</span>
+                        </div>
+                      )}
+
+                      {/* Rating */}
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex">
+                          {[...Array(5)].map((_, i) => {
+                            const starValue = i + 1;
+                            return (
+                              <Star
+                                key={i}
+                                className={`h-4 w-4 ${
+                                  starValue <= Math.round(destination.average_rating)
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-gray-300"
+                                }`}
+                              />
+                            );
+                          })}
+                        </div>
+
+                        <span className="text-xs text-gray-600">
+                          {destination.average_rating?.toFixed(1)} dari{" "}
+                          {destination.total_rating} rating
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
             </div>
+
+
           )}
           </div>
 
           {/* Submit Button */}
-          <Button type="submit" className="w-full bg-orange-300">
+          {/* <Button type="submit" className="w-full bg-orange-300">
             Berikan Rekomendasi
-          </Button>
+          </Button> */}
         </form>
         {loading && (
   <p className="text-center text-sm text-muted-foreground mt-4">

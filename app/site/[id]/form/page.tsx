@@ -1,7 +1,7 @@
 'use client'
 import { use, useEffect, useState } from 'react';
 
-import { Star } from 'lucide-react';
+import { Phone, Star } from 'lucide-react';
 
 import type React from "react"
 
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 
 
 
@@ -25,14 +26,30 @@ interface FormData {
 }
 
 const preferenceOptions = [
-  { id: "kuliner", label: "Kuliner" },
-  { id: "budaya", label: "Budaya" },
-  { id: "pantai", label: "Pantai" },
-  { id: "religi", label: "Religi" },
-  { id: "alam", label: "Alam" },
-  { id: "museum", label: "Museum" },
-  { id: "gunung", label: "Gunung" },
-  { id: "air terjun", label: "Air Terjun" },
+  {
+    id: "budaya", label: "Budaya", subCategories: [
+      {
+        id: "religi", label: "Religi",
+      },
+      {
+        id: "museum", label: "Museum",
+      }
+    ]
+  },
+  { id: "alam", label: "Alam", subCategories: [
+    {
+      id: "pantai", label: "Pantai",
+    },
+    {
+      id: "gunung", label: "Gunung",
+    },
+    {
+      id: "hutan", label: "Hutan",
+    },
+    {
+      id: "air terjun", label: "Air Terjun",
+    },
+  ] },
 ]
 
 
@@ -154,6 +171,7 @@ export default function BlogPostPage({
       const responseRatings = await fetch(`/api/already-rating`);
       const dataRatings = await responseRatings.json();
       setRatings(dataRatings.map((d:any) => ({
+        ...d,
         destinationId: d.id,  // samakan field
         rating: d.rating,
         name: d.name,
@@ -165,6 +183,7 @@ export default function BlogPostPage({
         total_rating: d.total_rating,
       })));
       setAllRatings(dataRatings.map((d:any) => ({
+        ...d,
         destinationId: d.id,  // samakan field
         rating: d.rating,
         name: d.name,
@@ -220,24 +239,35 @@ useEffect(() => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6 mt-6">
-          {/* Preferences Field */}
           <div className="space-y-3">
             <Label>Preferences</Label>
-            <div className="grid grid-cols-2 gap-3">
-              {preferenceOptions.map((option) => (
-                <div key={option.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={option.id}
-                    checked={formData.preferences.includes(option.id)}
-                    onCheckedChange={(checked) => handlePreferenceChange(option.id, checked as boolean)}
-                  />
-                  <Label htmlFor={option.id} className="text-sm font-normal cursor-pointer">
-                    {option.label}
-                  </Label>
+
+            {/* Loop kategori utama */}
+            {preferenceOptions.map((category) => (
+              <div key={category.id} className="border border-orange-100 rounded-xl p-3 bg-white/60">
+                <h4 className="font-semibold text-orange-700 mb-2">{category.label}</h4>
+
+                {/* Loop subkategori */}
+                <div className="grid grid-cols-2 gap-2 pl-2">
+                  {category.subCategories.map((sub) => (
+                    <div key={sub.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={sub.id}
+                        checked={formData.preferences.includes(sub.id)}
+                        onCheckedChange={(checked) =>
+                          handlePreferenceChange(sub.id, checked as boolean)
+                        }
+                      />
+                      <Label htmlFor={sub.id} className="text-sm font-normal cursor-pointer">
+                        {sub.label}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
+
 
           <div className="space-y-2">
             <Label htmlFor="bio">Tariff*</Label>
@@ -256,105 +286,112 @@ useEffect(() => {
 
           <div>
           <Label>Ratings*</Label>
+          {/* <p>{JSON.stringify(ratings)}</p> */}
           {ratings.length === 0 ? (
             <p className="text-sm text-muted-foreground">User belum memberi rating</p>
           ) : (
-            // <div className='grid grid-cols-2 gap-4 max-h-60 overflow-y-auto mt-2'>
-            //   {ratings.map((destination:any) => (
-            //     <div key={destination.destinationId} className="border-t border-orange-100 flex py-2 flex-col items-start gap-2">
-            //       <p className="text-sm">{destination.name}</p>
-            //       <div className="flex items-center gap-1">
-            //         {[...Array(5)].map((_, i) => {
-            //           const starValue = i + 1
-            //           return (
-            //             <Star
-            //               key={i}
-            //               className={`h-4 w-4 cursor-pointer ${
-            //                 starValue <= destination.rating
-            //                   ? "fill-yellow-400 text-yellow-400"
-            //                   : "text-gray-300"
-            //               }`}
-            //               onClick={() =>
-            //                 handleRatingChange(destination.destinationId, starValue)
-            //               }
-            //             />
-            //           )
-            //         })}
-            //       </div>
+            <div className="max-w-5xl mx-auto mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {ratings
+        .sort((a: any, b: any) => b.average_rating - a.average_rating) // urutkan rating tertinggi
+        .map((destination: any) => (
+          <Link
+            key={destination.destinationId}
+            href={`/site/${id}/form/${destination.destinationId}`}
+          >
+            <Card className="w-full border border-orange-100 bg-white shadow-sm hover:shadow-md transition">
+              {/* Gambar */}
+              {destination.image && (
+                <img
+                  src={destination.image}
+                  alt={destination.name}
+                  className="w-full h-48 object-cover rounded-t-md"
+                />
+              )}
 
-            //       <p className="text-sm text-muted-foreground">{destination.location}</p>
-            //       {/* <span className="text-sm font-semibold">{user.rating.toFixed(1)}</span> */}
-            //     </div>
-            //   ))}
-            // </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-96 overflow-y-auto mt-2">
-              {ratings
-                .sort((a: any, b: any) => b.average_rating - a.average_rating) // urutkan dari tertinggi ke terendah
-                .map((destination: any) => (
-                  <Link href={`/site/${id}/form/${destination.destinationId}`} key={destination.destinationId} className="no-underline">
-                    <div
-                      key={destination.destinationId}
-                      className="border border-orange-100 bg-white rounded-2xl p-4 transition-all flex flex-col gap-3"
-                    >
-                      {/* Header */}
-                      <div className="flex flex-col">
-                        <h3 className="text-base font-semibold text-gray-800">
-                          {destination.name || "Nama tidak tersedia"}
-                        </h3>
-                        <p className="text-sm text-gray-500">{destination.location || "-"}</p>
-                      </div>
+              <CardHeader className="pb-2">
+                <h2 className="text-lg font-semibold text-gray-800">{destination.name}</h2>
+                <p className="text-sm text-gray-500">{destination.address}</p>
 
-                      {/* Jenis wisata */}
-                      {destination.type?.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {destination.type.map((t: string, idx: number) => (
-                            <span
-                              key={idx}
-                              className="text-xs bg-orange-50 text-orange-600 px-2 py-1 rounded-full border border-orange-100"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                <div className="flex items-center gap-2 mt-1">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span className="text-sm text-gray-700">
+                    {destination.average_rating?.toFixed(1)} ({destination.total_rating})
+                  </span>
+                </div>
+              </CardHeader>
 
-                      {/* Tarif */}
-                      {destination.tariff && (
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <span className="font-medium">Tarif:</span>
-                          <span className="text-orange-600 font-semibold">{destination.tariff}</span>
-                        </div>
-                      )}
+              <CardContent className="space-y-3 text-sm text-gray-700">
+                {/* Jenis & Tarif */}
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <Badge variant="outline" className="text-orange-600 border-orange-200">
+                    {destination.type || "Tidak diketahui"}
+                  </Badge>
+                  <span className="font-medium text-green-600">
+                    Rp {destination.tariff === "N/a" ? "-" : destination.tariff}
+                  </span>
+                </div>
 
-                      {/* Rating */}
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => {
-                            const starValue = i + 1;
-                            return (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  starValue <= Math.round(destination.average_rating)
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-gray-300"
-                                }`}
-                              />
-                            );
-                          })}
-                        </div>
-
-                        <span className="text-xs text-gray-600">
-                          {destination.average_rating?.toFixed(1)} dari{" "}
-                          {destination.total_rating} rating
+                {/* Fasilitas */}
+                {destination.fasility && (
+                  <div>
+                    <span className="font-medium text-gray-800">Fasilitas:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {destination.fasility.split(",").map((fasilitas: string, index: number) => (
+                        <span
+                          key={index}
+                          className="bg-orange-50 border border-orange-100 rounded-full px-2 py-0.5 text-xs"
+                        >
+                          {fasilitas === "N/a" ? "Belum diidentifikasi" : fasilitas.trim()}
                         </span>
-                      </div>
+                      ))}
                     </div>
+                  </div>
+                )}
+
+                {/* Keunikan */}
+                {destination.unique && (
+                  <p>
+                    <span className="font-medium text-gray-800">Keunikan:</span>{" "}
+                    <span className="text-gray-600">{destination.unique}</span>
+                  </p>
+                )}
+
+                {/* Akses */}
+                {destination.accesebility && (
+                  <p>
+                    <span className="font-medium text-gray-800">Akses:</span>{" "}
+                    {destination.accesebility}
+                  </p>
+                )}
+
+                {/* Rute */}
+                {destination.rute && (
+                  <p>
+                    <span className="font-medium text-gray-800">Rute:</span>{" "}
+                    {destination.rute.toLowerCase().split("�").join(", ")}
+                  </p>
+                )}
+
+                {/* Kontak */}
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <Phone className="w-4 h-4 text-gray-500" />
+                  <span>{destination.phone === "0" ? "No Phone" : destination.phone}</span>
+                </div>
+
+                {/* Maps */}
+                {/* {destination.maps && (
+                  <Link
+                    href={destination.maps}
+                    className="text-orange-600 hover:underline break-all text-xs"
+                  >
+                    {destination.maps.toLowerCase()}
                   </Link>
-                ))}
-            </div>
-
-
+                )} */}
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+    </div>  
           )}
           </div>
 

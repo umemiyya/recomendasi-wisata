@@ -20,6 +20,13 @@ function toTitleCaseValues(obj: Record<string, any>) {
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
       const val = obj[key]
+
+      // Lewati key "image" dan "maps"
+      if (key === "image" || key === "maps") {
+        newObj[key] = val
+        continue
+      }
+
       if (typeof val === "string") {
         newObj[key] = toTitleCase(val)
       } else if (Array.isArray(val)) {

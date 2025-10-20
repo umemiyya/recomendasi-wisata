@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { formatter } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 const supabase = createClient();
@@ -84,7 +85,7 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(toTitleCaseValues(combinedData));
+    return NextResponse.json(formatter(combinedData));
   }
 
   return NextResponse.json([]);

@@ -13,11 +13,15 @@ function toTitleCase(str:any) {
     .join(" ");
 }
 
-export function formatter(arr:any[]) {
+export function formatter(arr: any[]) {
   return arr.map(obj => {
     const newObj: { [key: string]: any } = {};
     for (const key in obj) {
-      if (typeof obj[key] === "string") {
+      if (
+        typeof obj[key] === "string" &&
+        key !== "image" &&
+        key !== "maps"
+      ) {
         newObj[key] = toTitleCase(obj[key]);
       } else {
         newObj[key] = obj[key];
@@ -26,6 +30,7 @@ export function formatter(arr:any[]) {
     return newObj;
   });
 }
+
 
 
 // This check can be removed, it is just for tutorial purposes

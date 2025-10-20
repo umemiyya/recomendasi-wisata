@@ -49,6 +49,12 @@ const preferenceOptions = [
     {
       id: "air terjun", label: "Air Terjun",
     },
+    {
+      id: "goa", label: "Goa",
+    },
+    {
+      id: "permandian", label: "Permandian",
+    }
   ] },
 ]
 

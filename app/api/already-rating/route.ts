@@ -1,8 +1,46 @@
 import { createClient } from "@/lib/supabase/client";
-import { formatter } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 const supabase = createClient();
+
+export function toTitleCaseValues(obj: Record<string, any>) {
+  const toTitleCase = (str: string) =>
+    str
+      .toLowerCase()
+      .split(" ")
+      .map((word) =>
+        word.length > 0
+          ? word.charAt(0).toUpperCase() + word.slice(1)
+          : ""
+      )
+      .join(" ")
+
+  const newObj: Record<string, any> = {}
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const val = obj[key]
+
+      // Lewati key "image" dan "maps"
+      if (key === "image" || key === "maps") {
+        newObj[key] = val
+        continue
+      }
+
+      if (typeof val === "string") {
+        newObj[key] = toTitleCase(val)
+      } else if (Array.isArray(val)) {
+        newObj[key] = val.map((item) =>
+          typeof item === "string" ? toTitleCase(item) : item
+        )
+      } else if (typeof val === "object" && val !== null) {
+        newObj[key] = toTitleCaseValues(val)
+      } else {
+        newObj[key] = val
+      }
+    }
+  }
+  return newObj
+}
 
 export async function GET() {
   // Ambil semua data rating
@@ -46,7 +84,7 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(formatter(combinedData));
+    return NextResponse.json(toTitleCaseValues(combinedData));
   }
 
   return NextResponse.json([]);

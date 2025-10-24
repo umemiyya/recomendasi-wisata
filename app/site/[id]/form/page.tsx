@@ -9,7 +9,7 @@ import type React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from 'next/link';
@@ -102,7 +102,7 @@ export default function BlogPostPage({
 
   const [preferences, setPreferences] = useState<string[]>([])
 
-  const [selectedTariff, setSelectedTariff] = useState<string>(""); // 🟧 filter by tariff
+  // const [selectedTariff, setSelectedTariff] = useState<string>(""); // 🟧 filter by tariff
 
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -215,23 +215,23 @@ useEffect(() => {
   }
 
   // 🟧 Filter berdasarkan tarif
-  if (selectedTariff) {
-    const max = parseInt(selectedTariff, 10);
-    let min = 0;
+  // if (selectedTariff) {
+  //   const max = parseInt(selectedTariff, 10);
+  //   let min = 0;
 
-    if (max === 50000) min = 0;
-    else if (max === 100000) min = 50000;
-    else if (max === 500000) min = 100000;
-    else if (max === 10000000) min = 500000;
+  //   if (max === 50000) min = 0;
+  //   else if (max === 100000) min = 50000;
+  //   else if (max === 500000) min = 100000;
+  //   else if (max === 10000000) min = 500000;
 
-    filtered = filtered.filter((r: any) => {
-      const tariffNum = parseInt(r.tariff, 10);
-      return tariffNum >= min && tariffNum <= max;
-    });
-  }
+  //   filtered = filtered.filter((r: any) => {
+  //     const tariffNum = parseInt(r.tariff, 10);
+  //     return tariffNum >= min && tariffNum <= max;
+  //   });
+  // }
 
   setRatings(filtered);
-}, [preferences, selectedTariff, allRatings]);
+}, [preferences, allRatings]);
 
   return (
     <div className='text-sm'>
@@ -275,7 +275,7 @@ useEffect(() => {
           </div>
 
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label htmlFor="bio">Tariff*</Label>
             <Select value={selectedTariff} onValueChange={(value) => setSelectedTariff(value)}>
               <SelectTrigger className="w-[180px]">
@@ -288,7 +288,7 @@ useEffect(() => {
                 <SelectItem value="10000000"> {"> 500.000"} </SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
 
           <div>
           <Label>Ratings*</Label>

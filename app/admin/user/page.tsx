@@ -3,16 +3,14 @@
 import { formatter } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { DetailedProfileCard } from "./components/user-card";
+import { createClient } from "@/lib/supabase/client";
 
 export default function Users() {
-
   const [data, setData] = useState<any[]>([]);
 
-  // fetch user data from supabase
+  // Fetch user data
   useEffect(() => {
     const fetchData = async () => {
-      // const supabase = createClient();
-      // const { data, error } = await supabase.from("users").select("*");
       const response = await fetch(`/api/users`);
       const data = await response.json();
       if (response.ok) {
@@ -23,40 +21,33 @@ export default function Users() {
     fetchData();
   }, []);
 
+  // 🗑️ Handle Delete User
+  const handleDelete = async (id: string) => {
+    const confirmDelete = confirm("Apakah kamu yakin ingin menghapus user ini?");
+    if (!confirmDelete) return;
+
+    const supabase = createClient();
+    const { error } = await supabase.from("users").delete().eq("id", id);
+    if (error) {
+      alert("Gagal menghapus user!");
+    } else {
+      alert("User berhasil dihapus!");
+      setData((prev) => prev.filter((item) => item.user.id !== id));
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 mb-8">
         {data.map((dat) => (
-          <DetailedProfileCard key={dat.user.id} user={dat.user} rated_destinations={dat.rated_destinations} />
+          <DetailedProfileCard
+            key={dat.user.id}
+            user={dat.user}
+            rated_destinations={dat.rated_destinations}
+            onDelete={handleDelete}
+          />
         ))}
       </div>
-      {/* <Table>
-        <TableCaption>list user.</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px]">No</TableHead>
-            <TableHead>Nama</TableHead>
-            <TableHead>Umur</TableHead>
-            <TableHead>Jenis Kelamin</TableHead>
-            <TableHead>Preferensi</TableHead>
-            <TableHead>Rating</TableHead>
-            <TableHead>Rekomendasi</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {user.map((item, index) => (
-            <TableRow key={item.id}>
-              <TableCell>{index + 1}</TableCell>
-              <TableCell>{item.name}</TableCell>
-              <TableCell>{item.age}</TableCell>
-              <TableCell>{item.gender == 'L' ? 'Laki-laki' : 'Perempuan'}</TableCell>
-              <TableCell>{item.preferences}</TableCell>
-              <TableCell><Link href={`/admin/user/${item.id}/rating`} className="underline italic">Lihat Rating</Link></TableCell>
-              <TableCell><Link href={`/admin/user/${item.id}/rekomendasi`} className="underline italic">Lihat Rekomendasi</Link></TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table> */}
     </div>
-  )
+  );
 }

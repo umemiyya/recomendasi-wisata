@@ -279,6 +279,19 @@ export default function BlogPostPage({
                                   </div>
                                 </div>
                               )}
+
+                              {/* ubah ini dalam bentuk ui  ex. "21 Mnt�(18,8 Km)"*/}
+                              {destination.rute && (
+                                <div className="items-center gap-2 text-sm text-gray-700 mt-1">
+                                  <div>                                  
+                                  <span className='text-orange-500'>{destination.rute.split('�')[1].split('Km')[0]} Km) Dari pusat kota Barru</span>   
+                                  </div>
+                                  <div>
+                                  <span className='text-orange-500'>Waktu tempuh {destination.rute.split('�')[0].split('Mnt')[0]} menit</span>
+                                  </div>
+                                </div>
+                              )}
+
                               {destination.unique && (
                                 <p>
                                   <span className="font-medium text-gray-800">
@@ -309,4 +322,4 @@ export default function BlogPostPage({
       </div>
     </div>
   )
-}
+} 

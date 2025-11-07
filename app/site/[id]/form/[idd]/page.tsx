@@ -256,7 +256,7 @@ export default function BlogPostPage({
           <div className="border-t border-orange-100 my-3"></div>
 
           {/* Beri Rating */}
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <h4 className="font-medium text-sm mb-2">Beri Rating Anda:</h4>
             <div className="flex items-center gap-1">
               {[...Array(5)].map((_, i) => {
@@ -288,7 +288,7 @@ export default function BlogPostPage({
                 {message}
               </p>
             )}
-          </div>
+          </div> */}
 
           <div className="pt-4 border-t gap-4 border-orange-100 flex justify-end">
             <Link href={`/site/${id}/form`} className={buttonVariants({variant: 'default', className: 'bg-orange-400 hover:bg-orange-700'})}>Kembali</Link>

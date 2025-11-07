@@ -13,6 +13,7 @@ export function DestinationCard({
   fasility,
   unique,
   tariff,
+  rute,
   image,
 }: any) {
   return (
@@ -35,6 +36,8 @@ export function DestinationCard({
           <span className="text-white text-sm font-medium">{rating}</span>
         </div> */}
       </div>
+
+      {JSON.stringify(rute)}
 
       <CardHeader className="pb-3">
         <div className="space-y-2">

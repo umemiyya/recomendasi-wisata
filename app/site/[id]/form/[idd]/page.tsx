@@ -33,10 +33,9 @@ export default function BlogPostPage({
 }) {
   const { id, idd } = React.use(params)
   const [destination, setDestination] = useState<any>(null)
-  const [rating, setRating] = useState(0)
+ 
   const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+
 
   const supabase = createClient()
 
@@ -101,37 +100,37 @@ export default function BlogPostPage({
   }, [id, idd])
 
   // 🔽 Fungsi kirim rating ke API
-  async function handleRating(starValue: number) {
-    setRating(starValue)
-    if (!destination?.id) return
-    setSubmitting(true)
-    setMessage(null)
+  // async function handleRating(starValue: number) {
+  //   setRating(starValue)
+  //   if (!destination?.id) return
+  //   setSubmitting(true)
+  //   setMessage(null)
 
-    try {
-      const res = await fetch("/api/already-rating", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          destinationId: idd,
-          userId: id,
-          rating: starValue,
-        }),
-      })
+  //   try {
+  //     const res = await fetch("/api/already-rating", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         destinationId: idd,
+  //         userId: id,
+  //         rating: starValue,
+  //       }),
+  //     })
 
-      const result = await res.json()
-      if (result.success) {
-        setMessage("⭐ Terima kasih! Rating kamu berhasil dikirim.")
-      } else {
-        setMessage("❌ Gagal mengirim rating. Coba lagi nanti.")
-      }
-    } catch (err) {
-      console.error("Error posting rating:", err)
-      setMessage("⚠️ Terjadi kesalahan jaringan.")
-    } finally {
-      setSubmitting(false)
-      setTimeout(() => setMessage(null), 4000)
-    }
-  }
+  //     const result = await res.json()
+  //     if (result.success) {
+  //       setMessage("⭐ Terima kasih! Rating kamu berhasil dikirim.")
+  //     } else {
+  //       setMessage("❌ Gagal mengirim rating. Coba lagi nanti.")
+  //     }
+  //   } catch (err) {
+  //     console.error("Error posting rating:", err)
+  //     setMessage("⚠️ Terjadi kesalahan jaringan.")
+  //   } finally {
+  //     setSubmitting(false)
+  //     setTimeout(() => setMessage(null), 4000)
+  //   }
+  // }
 
   if (loading) {
     return (

@@ -251,12 +251,18 @@ export default function BlogPostPage({
                                 >
                                   {destination.type || "Tidak diketahui"}
                                 </Badge>
-                                <span className="font-medium text-green-600">
-                                  Rp{" "}
-                                  {destination.tariff === "N/a"
-                                    ? "-"
-                                    : destination.tariff}
-                                </span>
+                              <div>
+                                <span className="font-medium">Biaya:</span>
+                                <ul className="text-green-600 font-medium list-disc list-inside">
+                                  {destination.tariff === "N/a" ? (
+                                    <li>-</li>
+                                  ) : (
+                                    destination.tariff.split(",").map((item:any, index:number) => (
+                                      <li key={index}>Rp. {item.trim()}</li>
+                                    ))
+                                  )}
+                                </ul>
+                              </div>
                               </div>
                               {destination.fasility && (
                                 <div>

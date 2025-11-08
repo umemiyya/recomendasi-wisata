@@ -223,10 +223,17 @@ export default function BlogPostPage({
             </div>
             <div>
               <span className="font-medium">Biaya:</span>
-              <div className="flex items-center gap-1 text-green-600 font-medium">
-                Rp. {destination.tariff === "N/a" ? "-" : destination.tariff}
-              </div>
+              <ul className="text-green-600 font-medium list-disc list-inside">
+                {destination.tariff === "N/a" ? (
+                  <li>-</li>
+                ) : (
+                  destination.tariff.split(",").map((item:any, index:number) => (
+                    <li key={index}>Rp. {item.trim()}</li>
+                  ))
+                )}
+              </ul>
             </div>
+
           </div>
 
           {destination.maps && (

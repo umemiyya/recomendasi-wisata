@@ -9,6 +9,8 @@ import { buttonVariants, Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, Trash2, MapPin } from "lucide-react";
 import Link from "next/link";
+import { DestinationCard } from "./components/card-rekomendation";
+// import { DestinationCard } from "@/app/admin/destination/components/destination-card";
 
 export default function UserPage({
   params,
@@ -16,14 +18,110 @@ export default function UserPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const [data, setData] = useState<any[]>([]);
-  const [visited, setVisited] = useState<any[]>([]); // 🆕 daftar wisata yang dikunjungi
   const supabase = createClient();
+
+  const [data, setData] = useState<any[]>([]);
+  const [visited, setVisited] = useState<any[]>([]);
   const [rating, setRating] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-   async function handleRating(destinationId: string, starValue: number) {
+  // 🆕 Tambahan state rekomendasi
+  const [recommendations, setRecommendations] = useState<any>({
+    user: null,
+    recommendations: [],
+  });
+
+  // 🔄 Ambil data rekomendasi wisata
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        const response = await fetch(`/api/recommendations?userId=${id}`);
+        const data = await response.json();
+        setRecommendations(data);
+      } catch (error) {
+        console.error("Gagal memuat rekomendasi:", error);
+      }
+    };
+
+    if (id) fetchRecommendations();
+  }, [id]);
+
+  // 🔄 Ambil data user
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch(`/api/users`);
+      const data = await response.json();
+
+      if (response.ok) {
+        const newData = formatter(data as any[]);
+        const filteredUser = newData.filter((item) => item.user.id === parseInt(id));
+        setData(filteredUser);
+      } else {
+        console.error("Gagal mengambil data user:", data);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  // 🔄 Ambil daftar wisata yang dikunjungi
+  useEffect(() => {
+    const fetchVisited = async () => {
+      try {
+        const { data: kunjunganRows, error: kunjunganError } = await supabase
+          .from("kunjungan")
+          .select("id, user_id, wisata_id, kunjungan")
+          .eq("user_id", parseInt(id));
+
+        if (kunjunganError) {
+          console.error("Gagal memuat data kunjungan:", kunjunganError);
+          setVisited([]);
+          return;
+        }
+
+        if (!kunjunganRows || kunjunganRows.length === 0) {
+          setVisited([]);
+          return;
+        }
+
+        const wisataIds = kunjunganRows.map((k: any) => k.wisata_id).filter(Boolean);
+
+        const { data: wisataRows, error: wisataError } = await supabase
+          .from("wisata")
+          .select("*")
+          .in("id", wisataIds);
+
+        if (wisataError) {
+          console.error("Gagal memuat data wisata:", wisataError);
+          setVisited([]);
+          return;
+        }
+
+        const visitedCombined = kunjunganRows.map((k: any) => {
+          const matched = (wisataRows || []).find(
+            (w: any) => Number(w.id) === Number(k.wisata_id)
+          );
+          return {
+            kunjungan_id: k.id,
+            wisata_id: k.wisata_id,
+            kunjungan: k.kunjungan,
+            wisata: matched || null,
+          };
+        });
+
+        setVisited(visitedCombined);
+      } catch (err) {
+        console.error("Error saat memuat kunjungan + wisata:", err);
+        setVisited([]);
+      }
+    };
+
+    if (id) fetchVisited();
+  }, [id, supabase]);
+
+  // ⭐ Handle Rating
+  async function handleRating(destinationId: string, starValue: number) {
     setRating((prev) => ({ ...prev, [destinationId]: starValue }));
     setSubmitting(true);
     setMessage(null);
@@ -54,89 +152,7 @@ export default function UserPage({
     }
   }
 
-  // 🔍 Fetch user data lalu filter berdasarkan id
-  useEffect(() => {
-    const fetchData = async () => {
-      const response = await fetch(`/api/users`);
-      const data = await response.json();
-
-      if (response.ok) {
-        const newData = formatter(data as any[]);
-        const filteredUser = newData.filter((item) => item.user.id === parseInt(id));
-        setData(filteredUser);
-      } else {
-        console.error("Gagal mengambil data user:", data);
-      }
-    };
-
-    fetchData();
-  }, [id]);
-
-  // 🧭 Fetch daftar wisata yang telah dikunjungi oleh user
-// let supabase = createClient() harus sudah tersedia di scope komponen
-useEffect(() => {
-  const fetchVisited = async () => {
-    try {
-      // 1) ambil record kunjungan user
-      const { data: kunjunganRows, error: kunjunganError } = await supabase
-        .from("kunjungan")
-        .select("id, user_id, wisata_id, kunjungan")
-        .eq("user_id", parseInt(id)); // pastikan id numeric
-
-      if (kunjunganError) {
-        console.error("Gagal memuat data kunjungan:", kunjunganError);
-        setVisited([]);
-        return;
-      }
-
-      if (!kunjunganRows || kunjunganRows.length === 0) {
-        // tidak ada kunjungan
-        setVisited([]);
-        return;
-      }
-
-      // 2) ambil semua wisata yang id-nya ada di kunjungan (efisien: 1 query)
-      const wisataIds = kunjunganRows.map((k: any) => k.wisata_id).filter(Boolean);
-
-      if (wisataIds.length === 0) {
-        setVisited([]);
-        return;
-      }
-
-      const { data: wisataRows, error: wisataError } = await supabase
-        .from("wisata")
-        .select("*")
-        .in("id", wisataIds);
-
-      if (wisataError) {
-        console.error("Gagal memuat data wisata:", wisataError);
-        setVisited([]);
-        return;
-      }
-
-      // 3) gabungkan: untuk setiap kunjungan cari data wisata terkait
-      const visitedCombined = kunjunganRows.map((k: any) => {
-        const matched = (wisataRows || []).find((w: any) => Number(w.id) === Number(k.wisata_id));
-        return {
-          kunjungan_id: k.id,
-          wisata_id: k.wisata_id,
-          kunjungan: k.kunjungan,
-          wisata: matched || null, // bisa null kalau relasi tidak ditemukan
-        };
-      });
-
-      setVisited(visitedCombined);
-    } catch (err) {
-      console.error("Error saat memuat kunjungan + wisata:", err);
-      setVisited([]);
-    }
-  };
-
-  if (id) fetchVisited();
-}, [id, supabase]);
-
-
-  // 🗑️ Handle Delete User
+  // 🗑️ Hapus user
   const handleDelete = async (userId: string) => {
     const confirmDelete = confirm("Apakah kamu yakin ingin menghapus user ini?");
     if (!confirmDelete) return;
@@ -171,39 +187,32 @@ useEffect(() => {
           >
             <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
             <AvatarFallback className="text-xl bg-orange-50">
-              {user.name
-                ?.split(" ")
-                .map((n: string) => n[0])
-                .join("")}
+              {user.name?.split(" ").map((n: string) => n[0]).join("")}
             </AvatarFallback>
           </Avatar>
 
           <div className="flex-1 pt-2">
             <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-md pt-1 font-semibold">{user.name}</h2>
-              </div>
-              <div className="flex gap-2">
-                <Link
-                  href={`/site/${user.id}/form`}
-                  className={`${buttonVariants({ size: "sm", variant: "outline" })} shadow-none`}
-                >
-                  Form Rekomendasi
-                </Link>
-              </div>
+              <h2 className="text-md pt-1 font-semibold">{user.name}</h2>
+              <Link
+                href={`/site/${user.id}/form`}
+                className={`${buttonVariants({ size: "sm", variant: "outline" })} shadow-none`}
+              >
+                Form Rekomendasi
+              </Link>
             </div>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <p className="text-muted-foreground text-sm capitalize">
           {user.gender === "L" ? "Laki-laki" : "Perempuan"}, {user.age}
         </p>
 
         {user.bio && <p className="text-pretty text-sm">{user.bio}</p>}
 
-        {/* 🟧 Preferensi */}
+        {/* Preferensi */}
         <div className="space-y-3">
           <h4 className="font-semibold">Preferensi</h4>
           <div className="flex flex-wrap text-sm gap-2">
@@ -215,12 +224,9 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* 🟨 Rating Wisata */}
+        {/* Rating Wisata */}
         <div>
-          <div className="space-y-3 mb-2">
-            <h2 className="font-semibold">Rating Wisata</h2>
-          </div>
-
+          <h2 className="font-semibold mb-2">Rating Wisata</h2>
           {rated_destinations.length === 0 ? (
             <p className="text-sm text-muted-foreground">User belum memberi rating</p>
           ) : (
@@ -250,33 +256,25 @@ useEffect(() => {
           )}
         </div>
 
-
-         {/* 🟩 Wisata yang Telah Dikunjungi + Rating */}
+        {/* Wisata yang Telah Dikunjungi */}
         <div>
           <h2 className="font-semibold mb-2">Wisata yang Telah Dikunjungi</h2>
-
           {visited.length === 0 ? (
             <p className="text-sm text-muted-foreground">Belum ada data kunjungan.</p>
           ) : (
             visited.map((item, index) => (
-              <div
-                key={index}
-                className="border-t border-orange-100 py-3 flex flex-col gap-2"
-              >
+              <div key={index} className="border-t border-orange-100 py-3 flex flex-col gap-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <MapPin className="w-3 h-3 text-orange-500" />
                   {item.wisata?.name || "Nama wisata tidak tersedia"}
                 </p>
-
                 <p className="text-xs text-muted-foreground">
                   {item.wisata?.location || "Lokasi tidak diketahui"}
                 </p>
-
                 <p className="text-xs text-orange-600 font-semibold">
                   Jumlah kunjungan: {item.kunjungan}
                 </p>
-
-                {/* ⭐ Rating untuk wisata yang dikunjungi */}
+                {/* ⭐ Rating wisata */}
                 <div className="flex items-center gap-1 mt-1">
                   {[...Array(5)].map((_, i) => {
                     const starValue = i + 1;
@@ -298,11 +296,26 @@ useEffect(() => {
               </div>
             ))
           )}
-
           {message && <p className="mt-2 text-sm text-orange-600">{message}</p>}
         </div>
 
-        {/* 🗑️ Tombol Hapus */}
+        {/* 🟢 Rekomendasi Wisata */}
+        <div className="pt-4 border-t border-orange-100">
+          <h2 className="font-semibold text-lg mb-3">Rekomendasi Wisata</h2>
+          {recommendations.recommendations.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Tidak ada rekomendasi tersedia.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
+              {recommendations.recommendations.map((rec: any, index: number) => (
+                <DestinationCard key={index} {...rec} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Hapus User */}
         <Button
           size="sm"
           variant="destructive"

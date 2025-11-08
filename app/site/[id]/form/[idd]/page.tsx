@@ -228,7 +228,7 @@ export default function BlogPostPage({
                   <li>-</li>
                 ) : (
                   destination.tariff.split(",").map((item:any, index:number) => (
-                    <li key={index}>Rp. {item.trim()}</li>
+                    <li key={index}>{item.trim()}</li>
                   ))
                 )}
               </ul>

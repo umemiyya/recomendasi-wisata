@@ -268,9 +268,9 @@ export default function UserPage({
                   <MapPin className="w-3 h-3 text-orange-500" />
                   {item.wisata?.name || "Nama wisata tidak tersedia"}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {item.wisata?.location || "Lokasi tidak diketahui"}
-                </p>
+                <Link href={item.wisata?.maps || "#"} className="text-xs underline text-orange-500 text-muted-foreground">
+                  {item.wisata?.address.toLowerCase() || "Lokasi tidak diketahui"}
+                </Link>
                 <p className="text-xs text-orange-600 font-semibold">
                   Jumlah kunjungan: {item.kunjungan}
                 </p>
